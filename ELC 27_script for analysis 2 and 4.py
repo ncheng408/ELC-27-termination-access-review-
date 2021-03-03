@@ -67,8 +67,10 @@ def extractTerminationNameAndId(subject):
     return name, moreparts[0]
 
 if __name__ == '__main__':
+	
+	## PLEASE UPDATE THESE #####################
 
-	datapath = ['ELC 27','Q3 2020','Reports','Oracle HCM']
+	datapath = ['ELC 27','Q4 2020','Reports','Oracle HCM']
 
 	# read in Levisay file
 	levisayfile = datapath.copy()
@@ -77,24 +79,30 @@ if __name__ == '__main__':
 
 	# read in BPM file
 	bpmfile = datapath.copy()
-	bpmfile.append('BPM Q3 07 28 20 - 11 05 20.csv')
+	bpmfile.append('BPM Q4 02 24 21.csv')
 	bpmdata = pd.read_csv(os.path.join(*bpmfile))
 
 	# read in Last Login file
-	addatapath = ['ELC 27','Q3 2020','Reports','AD']
+	addatapath = ['ELC 27','Q4 2020','Reports','AD']
 	lastlogonfile = addatapath.copy()
-	lastlogonfile.append("User's_Last_Logon_1604342114294_1.csv")
+	lastlogonfile.append("User's_Last_Logon_1612271987781_1.csv")
 	logondata = pd.read_csv(os.path.join(*lastlogonfile), skiprows=8)
 
 	# read in All Users file
 	allusersfile = addatapath.copy()
-	allusersfile += ['Users', 'All Users.csv']
+	allusersfile += ['ADMPReport.csv']
 	usersdata = pd.read_csv(os.path.join(*allusersfile))
 
 	# read in Recently Disabled Users file
 	disabledfile = addatapath.copy()
-	disabledfile.append('Recently_Disabled_Users_1604342146928_1.csv')
+	disabledfile.append('Recently_Disabled_Users_1612272038965_1.csv')
 	disableddata = pd.read_csv(os.path.join(*disabledfile), skiprows=8)
+	
+	# update Start and End of quarter dates
+    	stdate = '2020-11-01'
+    	eddate = '2021-01-30'
+	
+	##############################################
 
 	## process levisay file
 	# convert to datetime
@@ -114,8 +122,10 @@ if __name__ == '__main__':
 	termdata['IsLeaderOrHomeOffice?'] = (termdata['IsLeader?'] == True) | (termdata['Org'] == 'Home Office')
 
 	# filter out rows by dates
-	startdate = pd.Timestamp(date.fromisoformat('2020-08-02'))
+	startdate = pd.Timestamp(date.fromisoformat(stdate))
 	termdata_filtered = termdata[(termdata['td'] >= startdate) | (termdata['ad'] >= startdate)]
+	enddate = pd.Timestamp(date.fromisoformat(eddate))
+    	termdata_filtered = termdata_filtered[termdata_filtered['td'] <= enddate]    
 
 	# filter for rows > 5 days
 	termdata_filtered = termdata_filtered[termdata_filtered['Gap (# of days)'] > pd.Timedelta(timedelta(days=5))]
@@ -154,11 +164,14 @@ if __name__ == '__main__':
 	    pid = row['Person Number']
 	    
 	    val = mapping.get(str(pid))
-	    bpmdatecol.append(val[1])
 	    if val is None:
 	        print(pid, row['First Name'], row['Last Name'])
 	        missing += 1
-	    
+		bpmdatecol.append(datetime(1900,1,1))
+		continue
+	    bpmdatecol.append(val[1])
+	
+	
 	termdata_filtered.insert(len(termdata_filtered.columns), 'bpmd', bpmdatecol)   
 	termdata_filtered['BPM Lookup Date'] = termdata_filtered.apply(lambda x: datetime.strftime(x['bpmd'], "%Y-%m-%d"), axis=1)
 
@@ -295,5 +308,5 @@ if __name__ == '__main__':
 	print("Total leaders: %d" % total_leaders)
 
 	# save to disk
-	termdata_filtered.to_excel('output2_q3.xlsx')
+	termdata_filtered.to_excel('output_ELC27.xlsx')
 
