@@ -41,7 +41,7 @@ def determineOrganization(job, dept, loc):
 
 # function that determines if leader based on job title
 def determineIsLeader(job):
-    return 'Leader' in job
+    return 'Leader' in job or 'Lead' in job
 
 # function that extracts the namd and assoc id based on line in BPM report
 def extractTerminationNameAndId(subject):
